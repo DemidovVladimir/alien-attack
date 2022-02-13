@@ -1,0 +1,7 @@
+Tokio north=Saitama west=Yamanashi south=Yokohama
+Chiba west=Tokyo south=Ichihara east=Choshi
+Saitama south=Kanagawa west=Nagano east=Tokio north=Gunma
+Gunma south=Takasaki east=Nikko north=Niigata west=Nagano
+Gufi north=Toyama south=Nagoya west=Fukui east=Yamanashi
+Kyoto east=Nagoya north=Tsuruga west=Kato south=Osaka
+Shiso north=Asago south=Tatsuno east=Kato west=Okayama

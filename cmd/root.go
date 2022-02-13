@@ -6,11 +6,13 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"github.com/VladimirDemidov/alien-attack/internal/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -66,4 +68,26 @@ func RunRoot(cmd *cobra.Command, args []string) {
 	fmt.Println(`Aliens could be pretty charming creatures, depends on your preference, 
 	not this time, universe are doomed (creatures config file):`, a)
 
+	//Get all available alien names
+	allAlienNames, err := fs.ReadAliensFile(a)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	//Land only those that fits into our alien swarm
+	alienSwarm := allAlienNames[0:s]
+
+	//Land aliens and start moving with go routines, as a realtime startegy
+	//instead of step by step approach
+	for _, alien := range alienSwarm {
+		wg.Add(1)
+		go func(a string) {
+			fmt.Println(a, " has landed...")
+			wg.Done()
+		}(alien)
+	}
+
+	wg.Wait()
+	<-quit
+	fmt.Println("You gave aliens ability to invade your world without excuse...")
 }

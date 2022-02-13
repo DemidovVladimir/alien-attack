@@ -5,3 +5,21 @@ Gunma south=Takasaki east=Nikko north=Niigata west=Nagano
 Gufi north=Toyama south=Nagoya west=Fukui east=Yamanashi
 Kyoto east=Nagoya north=Tsuruga west=Kato south=Osaka
 Shiso north=Asago south=Tatsuno east=Kato west=Okayama
+Yamanashi east=Tokio south=Yokohama
+Yokohama south=Saitama
+Ichihara west=Choshi
+Choshi east=Tokyo
+Kanagawa east=Nagano
+Nagano north=Kanagawa
+Takasaki north=Gunma
+Nikko west=Gunma
+Niigata south=Gunma
+Toyama south=Gufi
+Nagoya south=Toyama
+Fukui north=Yamanashi
+Tsuruga west=Nagoya
+Osaka east=Kato
+Asago south=Shiso
+Tatsuno north=Asago
+Okayama east=Kato
+Kato north=Asago

@@ -8,52 +8,38 @@ import (
 )
 
 func TestChooseLocation(t *testing.T) {
+	var i int64
+	c := make(chan *Alien)
 	w, _ := fs.ReadWorldFile("../../static/world.txt")
-	a := NewAlien("Bryval")
-	l := ChooseLocation(w, a)
+	a := NewAlien("Bryval", c)
+	l, _ := ChooseLocation(w, a, i)
 	assert.NotNil(t, l)
 	assert.NotNil(t, a.Location)
 }
 
-func TestChooseLocationWithAnotherAlien(t *testing.T) {
+func TestChooseLocationWithoutCity(t *testing.T) {
+	var i int64
+	c := make(chan *Alien)
 	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
-	a := NewAlien("Bryval")
-	ChooseLocation(w, a)
-	b := NewAlien("Zroth")
-	l := ChooseLocation(w, b)
-	assert.Nil(t, l)
+	w.Cities = nil
+	a := NewAlien("Bryval", c)
+	_, err := ChooseLocation(w, a, i)
+	assert.Error(t, err)
 }
 
 func TestNewAlien(t *testing.T) {
-	a := NewAlien("Iroverk")
+	c := make(chan *Alien)
+	a := NewAlien("Iroverk", c)
 	assert.Equal(t, "Iroverk", a.Name)
 }
 
-func TestBattle(t *testing.T) {
-	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
-	a := NewAlien("Bryval")
-	c := ChooseLocation(w, a)
-	b := NewAlien("Zroth")
-	ChooseLocation(w, b)
-	a.Battle(c, w)
-	assert.Equal(t, len(LandedAliens), 1)
-	assert.Nil(t, w.Cities[0])
-}
-
 func TestMove(t *testing.T) {
+	var i int64
+	c := make(chan *Alien)
 	w, _ := fs.ReadWorldFile("../../static/world.txt")
-	a := NewAlien("Bryval")
-	c := ChooseLocation(w, a)
-	a.Move(w)
+	a := NewAlien("Bryval", c)
+	cc, _ := ChooseLocation(w, a, i)
+	a.Move(w, i)
 	assert.NotNil(t, a.Location)
-	assert.Equal(t, 0, len(c.Aliens))
+	assert.Equal(t, 0, len(cc.Aliens))
 }
-
-// func TestDie(t *testing.T) {
-// 	NewAlien("Bryval")
-// 	assert.Equal(t, 1, len(LandedAliens))
-// 	// assert.Equal(t, a.Name, LandedAliens["Bryval"].Name)
-// 	// a.Die()
-// 	// assert.Nil(t, LandedAliens["Bryval"])
-// 	// assert.Equal(t, 0, len(LandedAliens))
-// }

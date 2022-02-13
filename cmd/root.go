@@ -12,9 +12,15 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/VladimirDemidov/alien-attack/entity/alien"
 	"github.com/VladimirDemidov/alien-attack/internal/fs"
 	"github.com/spf13/cobra"
 )
+
+type LiveAliens struct {
+	m map[string]*alien.Alien
+	sync.RWMutex
+}
 
 //Using cobra here, but I guess it is too much for this app
 //it could be used in future to make an app more flexible
@@ -22,12 +28,17 @@ import (
 //here I am only using characters from Starcraft(Zergs and Protos), could be aliens
 //from X-Com, Alienation or other game/movie
 var (
-	s  int
-	w  string
-	a  string
-	wg sync.WaitGroup
+	s          int
+	w          string
+	a          string
+	wg         sync.WaitGroup
+	liveAliens = LiveAliens{
+		m: make(map[string]*alien.Alien),
+	}
+	listLanded []string
 	//Quit is a gracefull shutdown, would be good to have in case of service runtime
 	quit    = make(chan os.Signal)
+	kill    = make(chan *alien.Alien)
 	rootCmd = &cobra.Command{
 		Use:   "alien-attack",
 		Short: "An alien attack game simulation",
@@ -68,6 +79,12 @@ func RunRoot(cmd *cobra.Command, args []string) {
 	fmt.Println(`Aliens could be pretty charming creatures, depends on your preference, 
 	not this time, universe are doomed (creatures config file):`, a)
 
+	world, err := fs.ReadWorldFile(w)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	fmt.Println("World consist of:", len(world.Cities), "cities")
+
 	//Get all available alien names
 	allAlienNames, err := fs.ReadAliensFile(a)
 	if err != nil {
@@ -77,15 +94,49 @@ func RunRoot(cmd *cobra.Command, args []string) {
 	//Land only those that fits into our alien swarm
 	alienSwarm := allAlienNames[0:s]
 
+	for i, name := range alienSwarm {
+		//Here we got landed invaders
+		la := alien.NewAlien(name, kill)
+		//Aliens are mostly invading big cities, city where alien landed
+		_, err := alien.ChooseLocation(world, la, int64(i))
+		listLanded = append(listLanded, la.Name)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		fmt.Println(la.Name, " has landed in", la.Location.Name)
+		liveAliens.Lock()
+		liveAliens.m[name] = la
+		liveAliens.Unlock()
+	}
+
 	//Land aliens and start moving with go routines, as a realtime startegy
 	//instead of step by step approach
-	for _, alien := range alienSwarm {
+	for i, alienStart := range listLanded {
 		wg.Add(1)
-		go func(a string) {
-			fmt.Println(a, " has landed...")
-			wg.Done()
-		}(alien)
+		//Extract to the sepparate function
+		go func(act string, i int, w *sync.WaitGroup) {
+			for j := 0; j < 10000; j++ {
+				//Extract to the sepparate function as well
+				go func(r int, liveAliens *LiveAliens) {
+					liveAliens.RLock()
+					if _, ok := liveAliens.m[act]; ok {
+						liveAliens.m[act].Move(world, int64(r))
+					}
+					liveAliens.RUnlock()
+				}(j, &liveAliens)
+			}
+			w.Done()
+		}(alienStart, i, &wg)
 	}
+
+	//Kill aliens
+	go func(c chan *alien.Alien) {
+		for alienToKill := range c {
+			liveAliens.Lock()
+			delete(liveAliens.m, alienToKill.Name)
+			liveAliens.Unlock()
+		}
+	}(kill)
 
 	wg.Wait()
 	<-quit

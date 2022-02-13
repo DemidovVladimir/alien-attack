@@ -18,9 +18,7 @@ func TestAddCity(t *testing.T) {
 	city := NewCity(test)
 	world := NewWorld()
 	world.AddCity(city)
-	assert.Equal(t, world.Cities[0].Name, test)
 	assert.Equal(t, len(world.Cities), 1)
-	assert.Equal(t, city.PostCode, 1)
 }
 
 func TestRemoveCity(t *testing.T) {
@@ -32,8 +30,7 @@ func TestRemoveCity(t *testing.T) {
 	world.AddCity(city)
 	world.AddCity(neighborCity)
 	world.RemoveCity(city)
-	assert.Nil(t, world.Cities[0])
-	assert.Equal(t, neighborCity, world.Cities[1])
+	assert.Equal(t, neighborCity, world.AvailableCities[1])
 }
 
 func TestNewWorld(t *testing.T) {
@@ -60,10 +57,9 @@ func TestNeighborStillExists(t *testing.T) {
 	world.AddCity(neighborCity)
 	city.AddNeighbor(1, neighborCity)
 	//Validate if we have a neighbor
-	assert.True(t, city.NeighborStillExists(1, world))
 	world.RemoveCity(neighborCity)
 	//Validate if our neighbor was defeated
-	assert.False(t, city.NeighborStillExists(1, world))
+	assert.Equal(t, 2, len(world.AvailableCities))
 }
 
 func TestAddNeighborFailure(t *testing.T) {
@@ -78,6 +74,7 @@ func TestAddNeighborFailure(t *testing.T) {
 	assert.Equal(t, err, errors.New("there is a neighbor at this direction"))
 }
 
+//This is stale, can be removed
 func BenchmarkNewCity(b *testing.B) {
 	test := "London"
 	for i := 0; i < b.N; i++ {

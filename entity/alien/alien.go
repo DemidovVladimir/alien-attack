@@ -1,76 +1,65 @@
 package alien
 
 import (
+	"errors"
 	"math/rand"
-	"time"
+	"sync"
 
 	"github.com/VladimirDemidov/alien-attack/entity/world"
 )
 
+//sync Mutex probably not the best solution, channels would be better solution
 type Alien struct {
 	Name     string
-	Status   string
 	Location *world.City
+	Kill     chan *Alien
+	sync.RWMutex
 }
 
 var WorldDirections = []string{"north", "south", "east", "west"}
 
-//All available aliens are here, move to the root
-var LandedAliens = make(map[string]*Alien)
-
 //Create a new alien
-func NewAlien(n string) *Alien {
+func NewAlien(n string, kill chan *Alien) *Alien {
 	alien := &Alien{
 		Name: n,
+		Kill: kill,
 	}
-	LandedAliens[alien.Name] = alien
 	return alien
 }
 
 //Choose a random location for an alien
 //This function is too long and some side effects are happening here,
 //would be great to refactor it
-func ChooseLocation(w *world.World, a *Alien) *world.City {
-	rand.Seed(time.Now().Unix())
-	city := w.Cities[rand.Intn(len(w.Cities))]
-
-	if len(city.Aliens) < 1 && w.Cities[city.PostCode-1] != nil {
+func ChooseLocation(w *world.World, a *Alien, r int64) (*world.City, error) {
+	rand.Seed(r)
+	randomCityName := w.AvailableCities[rand.Intn(len(w.AvailableCities))]
+	if city, ok := w.Cities[randomCityName.Name]; ok {
 		//Append makes extra memory allocation, could be replaced with sync.pool
-		city.Aliens = append(city.Aliens, a)
+		city.Aliens = append(city.Aliens, a.Name)
 		a.Location = city
-		return city
-	} else {
-		a.Battle(city, w)
-		return nil
+		return city, nil
 	}
-}
-
-//Battle between aliens in the city
-func (a *Alien) Battle(c *world.City, w *world.World) {
-	// Kill all aliens that are currently in the same city
-	for _, alien := range c.Aliens {
-		if competitor, ok := alien.(*Alien); ok {
-			competitor.Die()
-		}
-	}
-	a.Die()
-	w.RemoveCity(c)
+	return nil, errors.New("City does not exists")
 }
 
 //Move alien with the random direction, from current city
-func (a *Alien) Move(w *world.World) {
-	rand.Seed(time.Now().Unix())
-	nextCity := a.Location.Directions[rand.Intn(len(a.Location.Directions))]
-	if len(nextCity.Aliens) < 1 && nextCity != nil {
-		a.Location.Aliens = nil
-		a.Location = nextCity
-		a.Location.Aliens = append(a.Location.Aliens, a)
-	} else {
-		a.Battle(nextCity, w)
-	}
-}
+func (a *Alien) Move(w *world.World, r int64) {
+	// rand.Seed(r)
+	// newDir := world.Sides[rand.Intn(len(world.Sides))]
+	// newDirIndex := world.WorldDirections[newDir]
 
-//Kill involved alien
-func (a *Alien) Die() {
-	delete(LandedAliens, a.Name)
+	// //This is way to huge lock, normally should not happen
+	// a.Lock()
+	// if nextCity, ok := a.Location.Directions[newDirIndex]; ok {
+	// 	if nc, ok := w.Cities[nextCity.Name]; ok {
+	// 		if len(nc.Aliens) < 1 {
+	// 			a.Location.Aliens = nil
+	// 			a.Location = nc
+	// 			a.Location.Aliens = append(a.Location.Aliens, a.Name)
+	// 		} else {
+	a.Kill <- a
+	// 		}
+	// 	}
+	// }
+	// a.Unlock()
 }

@@ -22,7 +22,6 @@ func ReadWorldFile(l string) (*world.World, error) {
 		text := scanner.Text()
 		chunks := strings.Split(text, " ")
 		city := world.NewCity(chunks[0])
-
 		directions := chunks[1:]
 		for j := 0; j < len(directions); j++ {
 			ds := strings.Split(directions[j], "=")

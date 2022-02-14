@@ -106,6 +106,25 @@ func TestProvideCityWithRemovedCity(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestAddAlienOrFight(t *testing.T) {
+	test := "Tokio"
+	city := NewCity(test)
+	world := NewWorld()
+	world.AddCity(&city)
+	city.AddAlienOrFight("Gorm")
+	assert.Equal(t, 1, len(city.Aliens))
+}
+
+func TestAddAlienOrFightError(t *testing.T) {
+	test := "Tokio"
+	city := NewCity(test)
+	world := NewWorld()
+	world.AddCity(&city)
+	city.AddAlienOrFight("Gorm")
+	err := city.AddAlienOrFight("Uber")
+	assert.Error(t, err)
+}
+
 //This is stale, can be removed
 func BenchmarkNewCity(b *testing.B) {
 	test := "London"

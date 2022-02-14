@@ -47,6 +47,15 @@ func (c *City) AddNeighbor(d string, n City) error {
 	return nil
 }
 
+//Adds alien as a string to the city slice
+func (c *City) AddAlienOrFight(name string) error {
+	if len(c.Aliens) == 0 {
+		c.Aliens = append(c.Aliens, name)
+		return nil
+	}
+	return errors.New("fight back and kill all aliens")
+}
+
 //Create a constructor for the World
 //Populates Name but no need for directions at this stage
 func NewWorld() World {

@@ -8,4 +8,5 @@ type WorldUseCase interface {
 
 type CityUseCase interface {
 	AddNeighbor(int, *City) error
+	AddAlienOrFight(name string) error
 }

@@ -93,3 +93,31 @@ func (w *World) ProvideRandomCity(s int64) (string, error) {
 	}
 	return "", errors.New("city does not exists")
 }
+
+//Get city if it is still available in the w.Cities map
+//Return interface or error
+//Interface used for low coupling as well
+func (w *World) GetCityByName(name string) (interface{}, error) {
+	if c, ok := w.Cities[name]; ok {
+		return c, nil
+	}
+	return nil, errors.New("this city does not exist")
+}
+
+//Get random neighbor name as a string
+//Receive name of the city as a string value and seed for randomizer
+//Return name of the available random neighbor or error if such does not exist
+func (w *World) GetRandomNeighbor(name string, s int64) (string, error) {
+	c, err := w.GetCityByName(name)
+	if err != nil {
+		return "", errors.New("no such city")
+	}
+	n := c.(*City)
+	rand.Seed(s)
+	randomDirection := rand.Intn(len(n.Directions))
+	if n.Directions[randomDirection] != "" {
+		return n.Directions[randomDirection], nil
+	}
+
+	return "", errors.New("no such direction")
+}

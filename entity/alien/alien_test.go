@@ -20,7 +20,7 @@ func TestChooseLocationWithoutCity(t *testing.T) {
 	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
 	w.Cities = nil
 	a := NewAlien("Bryval")
-	err := ChooseLocation(w, a, i)
+	_, err := ChooseLocation(w, a, i)
 	assert.Error(t, err)
 }
 
@@ -29,25 +29,13 @@ func TestNewAlien(t *testing.T) {
 	assert.Equal(t, "Iroverk", a.Name)
 }
 
-// func TestMove(t *testing.T) {
-// 	var i int64
-// 	c := make(chan string)
-// 	w, _ := fs.ReadWorldFile("../../static/world.txt")
-// 	a := NewAlien("Bryval")
-
-// 	ChooseLocation(w, a, i)
-// 	a.Move(w, i, c)
-// 	assert.NotNil(t, a.Location)
-// }
-
-// func TestMoveFail(t *testing.T) {
-// 	var i int64
-// 	c := make(chan string)
-// 	w, _ := fs.ReadWorldFile("../../static/world.txt")
-// 	a := NewAlien("Bryval")
-
-// 	ChooseLocation(w, a, i)
-// 	a.Location.Directions = nil
-// 	err := a.Move(w, i, c)
-// 	assert.Error(t, err)
-// }
+func TestMove(t *testing.T) {
+	var i int64
+	c := make(chan string)
+	w, _ := fs.ReadWorldFile("../../static/world.txt")
+	a := NewAlien("Bryval")
+	al, _ := ChooseLocation(w, a, i)
+	a.Location = al
+	newLocation, _ := a.Move(w, i, c)
+	assert.NotNil(t, newLocation)
+}

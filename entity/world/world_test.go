@@ -125,6 +125,68 @@ func TestAddAlienOrFightError(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestGetCityByName(t *testing.T) {
+	test := "Tokio"
+	city := NewCity(test)
+	world := NewWorld()
+	world.AddCity(&city)
+	c, _ := world.GetCityByName(test)
+	assert.NotNil(t, c)
+}
+
+func TestGetCityByNameFail(t *testing.T) {
+	test := "Tokio"
+	world := NewWorld()
+	_, err := world.GetCityByName(test)
+	assert.Error(t, err)
+}
+
+func TestGetRandomNeighbor(t *testing.T) {
+	var s int64
+	test := "Tokio"
+	neighbor1 := "Minato"
+	neighbor2 := "London"
+	neighbor3 := "Krakow"
+	neighbor4 := "Capetown"
+	city := NewCity(test)
+	neighborCity1 := NewCity(neighbor1)
+	neighborCity2 := NewCity(neighbor2)
+	neighborCity3 := NewCity(neighbor3)
+	neighborCity4 := NewCity(neighbor4)
+	world := NewWorld()
+	world.AddCity(&city)
+	world.AddCity(&neighborCity1)
+	world.AddCity(&neighborCity2)
+	world.AddCity(&neighborCity3)
+	world.AddCity(&neighborCity4)
+	city.AddNeighbor("north", neighborCity1)
+	city.AddNeighbor("south", neighborCity2)
+	city.AddNeighbor("east", neighborCity3)
+	city.AddNeighbor("west", neighborCity4)
+	nn, _ := world.GetRandomNeighbor("Tokio", s)
+	assert.NotEmpty(t, nn)
+}
+
+func TestGetRandomNeighborFail(t *testing.T) {
+	var s int64
+	test := "Tokio"
+	city := NewCity(test)
+	world := NewWorld()
+	world.AddCity(&city)
+	_, err := world.GetRandomNeighbor("Tokio", s)
+	assert.Error(t, err)
+}
+
+func TestGetRandomNeighborEmptyWorld(t *testing.T) {
+	var s int64
+	test := "Tokio"
+	city := NewCity(test)
+	world := NewWorld()
+	world.AddCity(&city)
+	_, err := world.GetRandomNeighbor("Berlin", s)
+	assert.Error(t, err)
+}
+
 //This is stale, can be removed
 func BenchmarkNewCity(b *testing.B) {
 	test := "London"

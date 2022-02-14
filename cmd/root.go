@@ -97,14 +97,12 @@ func RunRoot(cmd *cobra.Command, args []string) {
 		//Here we got landed invaders
 		la := alien.NewAlien(name)
 		//Aliens are mostly invading big cities, city where alien landed
-		err := alien.ChooseLocation(world, la, int64(i))
-
-		fmt.Println(err)
-
+		name, err := alien.ChooseLocation(world, la, int64(i))
 		// listLanded = append(listLanded, la.Name)
-		// if err != nil {
-		// 	log.Println(err.Error())
-		// }
+		if err != nil {
+			log.Println(err.Error())
+		}
+		la.Location = name
 		// fmt.Println(la.Name, " has landed in", la.Location.Name)
 		// liveAliens.m[name] = la
 	}

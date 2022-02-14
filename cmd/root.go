@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/VladimirDemidov/alien-attack/entity/alien"
+	"github.com/VladimirDemidov/alien-attack/entity/world"
 	"github.com/VladimirDemidov/alien-attack/internal/fs"
 	"github.com/spf13/cobra"
 )
@@ -78,11 +79,27 @@ func RunRoot(cmd *cobra.Command, args []string) {
 	fmt.Println(`Aliens could be pretty charming creatures, depends on your preference, 
 	not this time, universe are doomed (creatures config file):`, a)
 
-	world, err := fs.ReadWorldFile(w)
+	www, alienSwarm := initiateUniverse(w, a)
+
+	leftAlive := landing(www, alienSwarm, &liveAliens)
+
+	if len(leftAlive.m) == 0 {
+		fmt.Println("All aliens are dead, nice try")
+		return
+	}
+
+	leftVeterans, www := invade(leftAlive, www)
+
+	fmt.Println(len(leftVeterans.m), " live aliens after invasion, probably trapped")
+	fmt.Println(len(www.Cities), " cities left able to fight back the swarm")
+}
+
+func initiateUniverse(w, a string) (*world.World, []string) {
+	www, err := fs.ReadWorldFile(w)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	fmt.Println("World consist of:", len(world.Cities), "cities")
+	fmt.Println("Inocent world consist of:", len(www.Cities), "cities")
 
 	//Get all available alien names
 	allAlienNames, err := fs.ReadAliensFile(a)
@@ -93,41 +110,55 @@ func RunRoot(cmd *cobra.Command, args []string) {
 	//Land only those that fits into our alien swarm
 	alienSwarm := allAlienNames[0:s]
 
-	for i, name := range alienSwarm {
+	return www, alienSwarm
+}
+
+func landing(www *world.World, alienSwarm []string, liveAliens *LiveAliens) *LiveAliens {
+	//Landing process
+	//Land preconfigured swarm
+	for i, alienName := range alienSwarm {
 		//Here we got landed invaders
-		la := alien.NewAlien(name)
+		la := alien.NewAlien(alienName)
 		//Aliens are mostly invading big cities, city where alien landed
-		name, err := alien.ChooseLocation(world, la, int64(i))
-		// listLanded = append(listLanded, la.Name)
-		if err != nil {
-			log.Println(err.Error())
+		cityName, _ := alien.ChooseLocation(www, la, int64(i))
+		city, _ := www.GetCityByName(cityName)
+		if address, ok := city.(*world.City); ok {
+			err := address.AddAlienOrFight(la.Name)
+			if err != nil {
+				www.RemoveCity(address)
+				for _, invader := range address.Aliens {
+					delete(liveAliens.m, invader)
+				}
+			}
+			liveAliens.m[la.Name] = la
+			la.Location = address.Name
 		}
-		la.Location = name
-		// fmt.Println(la.Name, " has landed in", la.Location.Name)
-		// liveAliens.m[name] = la
 	}
 
-	//Land aliens and start moving with go routines, as a realtime startegy
-	//instead of step by step approach, but this is still not the final version
-	// go func(c chan string, ll []string, la *LiveAliens) {
-	// 	for i, alienStart := range listLanded {
-	// 		for j := 0; j < 10000; j++ {
-	// 			if _, ok := liveAliens.m[alienStart]; ok {
-	// 				liveAliens.m[alienStart].Move(world, int64(i), c)
-	// 			}
-	// 		}
-	// 	}
-	// 	quit <- syscall.SIGQUIT
-	// }(eliminate, listLanded, &liveAliens)
+	return liveAliens
+}
 
-	// // Remove aliens from live slice
-	// go func(c chan string) {
-	// 	for name := range c {
-	// 		delete(liveAliens.m, name)
-	// 	}
-	// }(eliminate)
+func invade(liveAliens *LiveAliens, www *world.World) (*LiveAliens, *world.World) {
+	for k, ali := range liveAliens.m {
+		for j := 0; j < 10000; j++ {
+			if inv, ok := liveAliens.m[k]; ok {
+				//Returns name of the next move if available
+				nextMove, _ := inv.Move(www, int64(j))
+				//Take battle in case of another alien in place
+				city, _ := www.GetCityByName(nextMove)
 
-	// <-quit
-
-	fmt.Println(len(liveAliens.m), "aliens left alive after 10000 steps been performed...")
+				if address, ok := city.(*world.City); ok {
+					err := address.AddAlienOrFight(ali.Name)
+					if err != nil {
+						www.RemoveCity(address)
+						for _, invader := range address.Aliens {
+							delete(liveAliens.m, invader)
+						}
+					}
+					ali.Location = address.Name
+				}
+			}
+		}
+	}
+	return liveAliens, www
 }

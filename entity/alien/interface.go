@@ -9,3 +9,7 @@ type WorldUseCase interface {
 type CityUseCase interface {
 	AddAlienOrFight(name string) error
 }
+
+type AlienUseCase interface {
+	Move(WorldUseCase, int64) (string, error)
+}

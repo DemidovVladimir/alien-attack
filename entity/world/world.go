@@ -112,11 +112,13 @@ func (w *World) GetRandomNeighbor(name string, s int64) (string, error) {
 	if err != nil {
 		return "", errors.New("no such city")
 	}
-	n := c.(*City)
-	rand.Seed(s)
-	randomDirection := rand.Intn(len(n.Directions))
-	if n.Directions[randomDirection] != "" {
-		return n.Directions[randomDirection], nil
+
+	if n, ok := c.(*City); ok {
+		rand.Seed(s)
+		randomDirection := rand.Intn(len(n.Directions))
+		if n.Directions[randomDirection] != "" {
+			return n.Directions[randomDirection], nil
+		}
 	}
 
 	return "", errors.New("no such direction")

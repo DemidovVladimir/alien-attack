@@ -22,6 +22,6 @@ func ChooseLocation(w WorldUseCase, a *Alien, s int64) (string, error) {
 }
 
 //Move alien with the random direction
-func (a *Alien) Move(w WorldUseCase, s int64, c chan string) (string, error) {
+func (a *Alien) Move(w WorldUseCase, s int64) (string, error) {
 	return w.GetRandomNeighbor(a.Location, s)
 }

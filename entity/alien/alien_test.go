@@ -31,11 +31,10 @@ func TestNewAlien(t *testing.T) {
 
 func TestMove(t *testing.T) {
 	var i int64
-	c := make(chan string)
 	w, _ := fs.ReadWorldFile("../../static/world.txt")
 	a := NewAlien("Bryval")
 	al, _ := ChooseLocation(w, a, i)
 	a.Location = al
-	newLocation, _ := a.Move(w, i, c)
+	newLocation, _ := a.Move(w, i)
 	assert.NotNil(t, newLocation)
 }

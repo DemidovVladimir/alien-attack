@@ -35,3 +35,8 @@ perhaps using sync.pool would bring some performance boost
 -  Too much time spent on providing world map file
 -  Should not jump straight away for cuncurent way of doing things (start simple is better and then refactor on the way) 
 -  Perhaps usinig graph was not the best data structure to choose here
+
+## Provided some refactoring as well, what's new in this PR: https://github.com/DemidovVladimir/alien-attack/pull/1
+-  Using sequential login as a first itteration
+-  Fixed coupling problem that was happening in the first version
+-  Increased packages testing

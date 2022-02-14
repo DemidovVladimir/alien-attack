@@ -1,27 +1,33 @@
 package alien
 
-// func TestChooseLocation(t *testing.T) {
-// 	var i int64
-// 	w, _ := fs.ReadWorldFile("../../static/world.txt")
-// 	a := NewAlien("Bryval")
-// 	l, _ := ChooseLocation(w, a, i)
-// 	assert.NotNil(t, l)
-// 	assert.NotNil(t, a.Location)
-// }
+import (
+	"testing"
 
-// func TestChooseLocationWithoutCity(t *testing.T) {
-// 	var i int64
-// 	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
-// 	w.Cities = nil
-// 	a := NewAlien("Bryval")
-// 	_, err := ChooseLocation(w, a, i)
-// 	assert.Error(t, err)
-// }
+	"github.com/VladimirDemidov/alien-attack/internal/fs"
+	"github.com/stretchr/testify/assert"
+)
 
-// func TestNewAlien(t *testing.T) {
-// 	a := NewAlien("Iroverk")
-// 	assert.Equal(t, "Iroverk", a.Name)
-// }
+func TestChooseLocation(t *testing.T) {
+	var i int64
+	w, _ := fs.ReadWorldFile("../../static/world.txt")
+	a := NewAlien("Bryval")
+	ChooseLocation(w, a, i)
+	assert.NotNil(t, a.Location)
+}
+
+func TestChooseLocationWithoutCity(t *testing.T) {
+	var i int64
+	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
+	w.Cities = nil
+	a := NewAlien("Bryval")
+	err := ChooseLocation(w, a, i)
+	assert.Error(t, err)
+}
+
+func TestNewAlien(t *testing.T) {
+	a := NewAlien("Iroverk")
+	assert.Equal(t, "Iroverk", a.Name)
+}
 
 // func TestMove(t *testing.T) {
 // 	var i int64

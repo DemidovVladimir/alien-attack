@@ -24,10 +24,10 @@ func NewAlien(n string) *Alien {
 //Adds string value to the c.Aliens
 func ChooseLocation(w WorldUseCase, a *Alien, s int64) error {
 	city, err := w.ProvideRandomCity(s)
-	fmt.Println(city)
 	if err != nil {
 		return err
 	}
+	a.Location = city
 	return nil
 }
 

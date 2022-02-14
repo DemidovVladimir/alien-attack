@@ -97,36 +97,39 @@ func RunRoot(cmd *cobra.Command, args []string) {
 		//Here we got landed invaders
 		la := alien.NewAlien(name)
 		//Aliens are mostly invading big cities, city where alien landed
-		_, err := alien.ChooseLocation(world, la, int64(i))
-		listLanded = append(listLanded, la.Name)
-		if err != nil {
-			log.Println(err.Error())
-		}
-		fmt.Println(la.Name, " has landed in", la.Location.Name)
-		liveAliens.m[name] = la
+		err := alien.ChooseLocation(world, la, int64(i))
+
+		fmt.Println(err)
+
+		// listLanded = append(listLanded, la.Name)
+		// if err != nil {
+		// 	log.Println(err.Error())
+		// }
+		// fmt.Println(la.Name, " has landed in", la.Location.Name)
+		// liveAliens.m[name] = la
 	}
 
 	//Land aliens and start moving with go routines, as a realtime startegy
 	//instead of step by step approach, but this is still not the final version
-	go func(c chan string, ll []string, la *LiveAliens) {
-		for i, alienStart := range listLanded {
-			for j := 0; j < 10000; j++ {
-				if _, ok := liveAliens.m[alienStart]; ok {
-					liveAliens.m[alienStart].Move(world, int64(i), c)
-				}
-			}
-		}
-		quit <- syscall.SIGQUIT
-	}(eliminate, listLanded, &liveAliens)
+	// go func(c chan string, ll []string, la *LiveAliens) {
+	// 	for i, alienStart := range listLanded {
+	// 		for j := 0; j < 10000; j++ {
+	// 			if _, ok := liveAliens.m[alienStart]; ok {
+	// 				liveAliens.m[alienStart].Move(world, int64(i), c)
+	// 			}
+	// 		}
+	// 	}
+	// 	quit <- syscall.SIGQUIT
+	// }(eliminate, listLanded, &liveAliens)
 
-	// Remove aliens from live slice
-	go func(c chan string) {
-		for name := range c {
-			delete(liveAliens.m, name)
-		}
-	}(eliminate)
+	// // Remove aliens from live slice
+	// go func(c chan string) {
+	// 	for name := range c {
+	// 		delete(liveAliens.m, name)
+	// 	}
+	// }(eliminate)
 
-	<-quit
+	// <-quit
 
 	fmt.Println(len(liveAliens.m), "aliens left alive after 10000 steps been performed...")
 }

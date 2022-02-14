@@ -1,60 +1,38 @@
 package alien
 
-import (
-	"errors"
-	"math/rand"
+import "fmt"
 
-	"github.com/VladimirDemidov/alien-attack/entity/world"
-)
-
-//sync Mutex probably not the best solution, channels would be better solution
 type Alien struct {
 	Name     string
-	Location *world.City
+	Location string
 }
 
-var WorldDirections = []string{"north", "south", "east", "west"}
+//Code duplication for low coupling
+var WorldDirections = map[string]int{"north": 0, "south": 1, "east": 2, "west": 3}
+var Sides = []string{"north", "south", "east", "west"}
 
 //Create a new alien
 func NewAlien(n string) *Alien {
-	alien := &Alien{
+	return &Alien{
 		Name: n,
 	}
-	return alien
 }
 
 //Choose a random location for an alien
-//This function is too long and some side effects are happening here,
-//would be great to refactor it
-func ChooseLocation(w *world.World, a *Alien, r int64) (*world.City, error) {
-	rand.Seed(r)
-	randomCityName := w.AvailableCities[rand.Intn(len(w.AvailableCities))]
-	if city, ok := w.Cities[randomCityName.Name]; ok {
-		//Append makes extra memory allocation, could be replaced with sync.pool
-		city.Aliens = append(city.Aliens, a.Name)
-		a.Location = city
-		return city, nil
+//Adds string value to the w.InitialWorld
+//Set string value to the a.Location
+//Adds string value to the c.Aliens
+func ChooseLocation(w WorldUseCase, a *Alien, s int64) error {
+	city, err := w.ProvideRandomCity(s)
+	fmt.Println(city)
+	if err != nil {
+		return err
 	}
-	return nil, errors.New("City does not exists")
+	return nil
 }
 
 //Move alien with the random direction, from current city
-func (a *Alien) Move(w *world.World, r int64, c chan string) error {
-	rand.Seed(r)
-	newDir := world.Sides[rand.Intn(len(world.Sides))]
-	newDirIndex := world.WorldDirections[newDir]
-
-	//This is way to huge lock, normally should not happen
-	if nextCity, ok := a.Location.Directions[newDirIndex]; ok {
-		if nc, ok := w.Cities[nextCity.Name]; ok {
-			if len(nc.Aliens) < 1 {
-				nc.Aliens = append(nc.Aliens, a.Name)
-			} else {
-				c <- a.Name
-			}
-			return nil
-		}
-		return nil
-	}
-	return errors.New("No such direction")
+func (a *Alien) Move(w WorldUseCase, r int64, c chan string) error {
+	fmt.Println("Made a move")
+	return nil
 }

@@ -32,7 +32,12 @@ func ChooseLocation(w WorldUseCase, a *Alien, s int64) error {
 }
 
 //Move alien with the random direction, from current city
-func (a *Alien) Move(w WorldUseCase, r int64, c chan string) error {
-	fmt.Println("Made a move")
+//Use WorldUseCase in order to decouple things
+func (a *Alien) Move(w WorldUseCase, s int64, c chan string) error {
+	city, err := w.ProvideRandomCity(s)
+	fmt.Println("Made a move to the", city)
+	if err != nil {
+		return err
+	}
 	return nil
 }

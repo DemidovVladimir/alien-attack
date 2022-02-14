@@ -74,10 +74,13 @@ func (w *World) RemoveCity(c *City) {
 //Randomly picks string value from the w.InitialWorld list
 //Picks this city name from the w.Cities map and validates if it still exists
 func (w *World) ProvideRandomCity(s int64) (string, error) {
+	if len(w.InitialWorld) < 1 {
+		return "", errors.New("the world is empty")
+	}
 	rand.Seed(s)
 	randomCityName := w.InitialWorld[rand.Intn(len(w.InitialWorld))]
 	if c, ok := w.Cities[randomCityName]; ok {
 		return c.Name, nil
 	}
-	return "", errors.New("City does not exists")
+	return "", errors.New("city does not exists")
 }

@@ -9,39 +9,39 @@ var Sides = []string{"north", "south", "east", "west"}
 
 //City is a node within graph
 type City struct {
-	Name   string
-	Aliens []string
-	//Think slice would fit better here
-	Directions map[int]*City
+	Name       string
+	Aliens     []string
+	Directions []string
 }
 
 //World is technically a graph, allows for a random alien dislocation
 type World struct {
 	//List of all available cities
-	Cities          map[string]*City
-	AvailableCities []*City
+	Cities map[string]*City
 }
 
 //Create a constructor function for the Vertex
-func NewCity(name string) *City {
-	return &City{
+func NewCity(name string) City {
+	return City{
 		Name:       name,
-		Directions: map[int]*City{},
+		Directions: make([]string, 4),
 	}
 }
 
-//Add neighbor d - direction, n - neighbor, c - origin city
-func (c *City) AddNeighbor(d int, n *City) error {
-	if c.Directions[d] != nil {
+//Add neighbor d - direction, n - neighbor
+func (c *City) AddNeighbor(d string, n City) error {
+	wp := WorldDirections[d]
+
+	if c.Directions[wp] != "" {
 		return errors.New("there is a neighbor at this direction")
 	}
-	c.Directions[d] = n
+	c.Directions[wp] = n.Name
 	return nil
 }
 
 //Create a constructor for the graph
-func NewWorld() *World {
-	return &World{
+func NewWorld() World {
+	return World{
 		Cities: make(map[string]*City),
 	}
 }
@@ -50,7 +50,6 @@ func NewWorld() *World {
 //Get rid of the append, if performance are the priority, could use sync.pool for example
 func (w *World) AddCity(c *City) {
 	w.Cities[c.Name] = c
-	w.AvailableCities = append(w.AvailableCities, c)
 }
 
 //Remove city after alien atack

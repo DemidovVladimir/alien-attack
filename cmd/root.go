@@ -31,15 +31,14 @@ var (
 	s          int
 	w          string
 	a          string
-	wg         sync.WaitGroup
 	liveAliens = LiveAliens{
 		m: make(map[string]*alien.Alien),
 	}
 	listLanded []string
 	//Quit is a gracefull shutdown, would be good to have in case of service runtime
-	quit    = make(chan os.Signal)
-	kill    = make(chan *alien.Alien)
-	rootCmd = &cobra.Command{
+	quit      = make(chan os.Signal)
+	eliminate = make(chan string)
+	rootCmd   = &cobra.Command{
 		Use:   "alien-attack",
 		Short: "An alien attack game simulation",
 		Long: `An alien attack game simulation, please pick how massaive the attack is 
@@ -96,7 +95,7 @@ func RunRoot(cmd *cobra.Command, args []string) {
 
 	for i, name := range alienSwarm {
 		//Here we got landed invaders
-		la := alien.NewAlien(name, kill)
+		la := alien.NewAlien(name)
 		//Aliens are mostly invading big cities, city where alien landed
 		_, err := alien.ChooseLocation(world, la, int64(i))
 		listLanded = append(listLanded, la.Name)
@@ -104,41 +103,30 @@ func RunRoot(cmd *cobra.Command, args []string) {
 			log.Println(err.Error())
 		}
 		fmt.Println(la.Name, " has landed in", la.Location.Name)
-		liveAliens.Lock()
 		liveAliens.m[name] = la
-		liveAliens.Unlock()
 	}
 
 	//Land aliens and start moving with go routines, as a realtime startegy
-	//instead of step by step approach
-	for i, alienStart := range listLanded {
-		wg.Add(1)
-		//Extract to the sepparate function
-		go func(act string, i int, w *sync.WaitGroup) {
+	//instead of step by step approach, but this is still not the final version
+	go func(c chan string, ll []string, la *LiveAliens) {
+		for i, alienStart := range listLanded {
 			for j := 0; j < 10000; j++ {
-				//Extract to the sepparate function as well
-				go func(r int, liveAliens *LiveAliens) {
-					liveAliens.RLock()
-					if _, ok := liveAliens.m[act]; ok {
-						liveAliens.m[act].Move(world, int64(r))
-					}
-					liveAliens.RUnlock()
-				}(j, &liveAliens)
+				if _, ok := liveAliens.m[alienStart]; ok {
+					liveAliens.m[alienStart].Move(world, int64(i), c)
+				}
 			}
-			w.Done()
-		}(alienStart, i, &wg)
-	}
-
-	//Kill aliens
-	go func(c chan *alien.Alien) {
-		for alienToKill := range c {
-			liveAliens.Lock()
-			delete(liveAliens.m, alienToKill.Name)
-			liveAliens.Unlock()
 		}
-	}(kill)
+		quit <- syscall.SIGQUIT
+	}(eliminate, listLanded, &liveAliens)
 
-	wg.Wait()
+	// Remove aliens from live slice
+	go func(c chan string) {
+		for name := range c {
+			delete(liveAliens.m, name)
+		}
+	}(eliminate)
+
 	<-quit
-	fmt.Println("You gave aliens ability to invade your world without excuse...")
+
+	fmt.Println(len(liveAliens.m), "aliens left alive after 10000 steps been performed...")
 }

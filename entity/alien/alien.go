@@ -3,7 +3,6 @@ package alien
 import (
 	"errors"
 	"math/rand"
-	"sync"
 
 	"github.com/VladimirDemidov/alien-attack/entity/world"
 )
@@ -12,17 +11,14 @@ import (
 type Alien struct {
 	Name     string
 	Location *world.City
-	Kill     chan *Alien
-	sync.RWMutex
 }
 
 var WorldDirections = []string{"north", "south", "east", "west"}
 
 //Create a new alien
-func NewAlien(n string, kill chan *Alien) *Alien {
+func NewAlien(n string) *Alien {
 	alien := &Alien{
 		Name: n,
-		Kill: kill,
 	}
 	return alien
 }
@@ -43,23 +39,22 @@ func ChooseLocation(w *world.World, a *Alien, r int64) (*world.City, error) {
 }
 
 //Move alien with the random direction, from current city
-func (a *Alien) Move(w *world.World, r int64) {
-	// rand.Seed(r)
-	// newDir := world.Sides[rand.Intn(len(world.Sides))]
-	// newDirIndex := world.WorldDirections[newDir]
+func (a *Alien) Move(w *world.World, r int64, c chan string) error {
+	rand.Seed(r)
+	newDir := world.Sides[rand.Intn(len(world.Sides))]
+	newDirIndex := world.WorldDirections[newDir]
 
-	// //This is way to huge lock, normally should not happen
-	// a.Lock()
-	// if nextCity, ok := a.Location.Directions[newDirIndex]; ok {
-	// 	if nc, ok := w.Cities[nextCity.Name]; ok {
-	// 		if len(nc.Aliens) < 1 {
-	// 			a.Location.Aliens = nil
-	// 			a.Location = nc
-	// 			a.Location.Aliens = append(a.Location.Aliens, a.Name)
-	// 		} else {
-	a.Kill <- a
-	// 		}
-	// 	}
-	// }
-	// a.Unlock()
+	//This is way to huge lock, normally should not happen
+	if nextCity, ok := a.Location.Directions[newDirIndex]; ok {
+		if nc, ok := w.Cities[nextCity.Name]; ok {
+			if len(nc.Aliens) < 1 {
+				nc.Aliens = append(nc.Aliens, a.Name)
+			} else {
+				c <- a.Name
+			}
+			return nil
+		}
+		return nil
+	}
+	return errors.New("No such direction")
 }

@@ -13,7 +13,7 @@ test:
 	go test -v ./... -coverprofile=coverage.out
 
 run-dev: 
-	go run ./... -s=5 -w=static/world.txt -a=static/aliens.txt
+	go run main.go -s=25 -w=static/world.txt -a=static/aliens.txt
 
 build:
 	go install github.com/VladimirDemidov/alien-attack  

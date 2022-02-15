@@ -2,8 +2,8 @@ package alien
 
 type WorldUseCase interface {
 	ProvideRandomCity(int64) (string, error)
-	GetCityByName(string) (interface{}, error)
 	GetRandomNeighbor(string, int64) (string, error)
+	GetCityByName(string) (interface{}, error)
 }
 
 type CityUseCase interface {
@@ -11,5 +11,5 @@ type CityUseCase interface {
 }
 
 type AlienUseCase interface {
-	Move(WorldUseCase, int64) (string, error)
+	Move(WorldUseCase, int) (string, error)
 }

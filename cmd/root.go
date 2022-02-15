@@ -18,28 +18,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type LiveAliens struct {
-	m map[string]*alien.Alien
-	sync.RWMutex
-}
-
 //Using cobra here, but I guess it is too much for this app
 //it could be used in future to make an app more flexible
 //For example I was thinking of adding config for different alien nations,
 //here I am only using characters from Starcraft(Zergs and Protos), could be aliens
 //from X-Com, Alienation or other game/movie
 var (
-	s          int
-	w          string
-	a          string
-	liveAliens = LiveAliens{
-		m: make(map[string]*alien.Alien),
-	}
-	listLanded []string
+	s int
+	w string
+	a string
 	//Quit is a gracefull shutdown, would be good to have in case of service runtime
-	quit      = make(chan os.Signal)
-	eliminate = make(chan string)
-	rootCmd   = &cobra.Command{
+	quit = make(chan os.Signal)
+	//Remove alien channel
+	rac = make(chan string, 2)
+	//Remove city channel
+	rcc     = make(chan string)
+	wg      sync.WaitGroup
+	rootCmd = &cobra.Command{
 		Use:   "alien-attack",
 		Short: "An alien attack game simulation",
 		Long: `An alien attack game simulation, please pick how massaive the attack is 
@@ -47,7 +42,87 @@ var (
 		alien specialities and abilities. This way it will be interesting to run the simulation.
 		Other then that there could be an option to invade different other worlds, current version
 		is only invading world of Japan`,
-		Run: RunRoot,
+		Run: func(cmd *cobra.Command, args []string) {
+			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+			fmt.Println(`
+	Welcome to the inspiring web3 universe, where aliens are not the biggest topic anymore...
+	Here is the world and invaders configuration, upon which you would act on:
+	`)
+
+			fmt.Println("Invaders swarm flying to the planet (swarm consists of)", s, "creatures")
+			fmt.Println("You have configured this word to be invaded (world config file)", w)
+			fmt.Println(`Aliens could be pretty charming creatures, depends on your preference,
+	not this time, universe are doomed (creatures config file):`, a)
+
+			//Initiate unoverse
+			www, swarm := initiateUniverse(w, a)
+
+			//Land all aliens, attack can be performed even before all of them are landed
+			for i, a := range swarm.LandedAliens {
+				wg.Add(1)
+				go func(a string, w *world.World, swarm *alien.Swarm, i int, rcc chan string, wg *sync.WaitGroup) {
+					defer wg.Done()
+					if selectedAlien, k := swarm.Aliens.Load(a); k {
+						sa := selectedAlien.(*alien.Alien)
+						cn, _ := alien.ChooseLocation(w, selectedAlien.(*alien.Alien), i)
+						if city, ok := www.Cities.Load(cn); ok {
+							cc := city.(*world.City)
+							cc.Aliens = append(cc.Aliens, a)
+							sa.Location = cn
+						}
+
+					}
+				}(a, www, swarm, i, rcc, &wg)
+			}
+
+			//Performing aliens movement, with battles meanwhile
+			for _, a := range swarm.LandedAliens {
+				wg.Add(1)
+				go func(
+					a string,
+					w *world.World,
+					swarm *alien.Swarm,
+					rcc chan string,
+					rac chan string,
+					wg *sync.WaitGroup,
+				) {
+					defer wg.Done()
+					for i := 0; i < 10000; i++ {
+						if selectedAlien, k := swarm.Aliens.Load(a); k {
+							sa := selectedAlien.(*alien.Alien)
+							cn, _ := sa.Move(www, i)
+							if city, ok := www.Cities.Load(cn); ok {
+								cc := city.(*world.City)
+								//If there is an alien already, kill it and current alien
+								if len(cc.Aliens) > 0 {
+									rac <- a
+									rcc <- cn
+								} else {
+									cc.Aliens = append(cc.Aliens, a)
+								}
+							}
+						}
+					}
+				}(a, www, swarm, rcc, rac, &wg)
+			}
+
+			go func(rac chan string, rcc chan string, swarm *alien.Swarm, www *world.World, wg *sync.WaitGroup) {
+				for {
+					select {
+					case al := <-rac:
+						swarm.Aliens.Delete(al)
+					case ci := <-rcc:
+						www.Cities.Delete(ci)
+					case <-quit:
+						return
+					}
+				}
+			}(rac, rcc, swarm, www, &wg)
+
+			wg.Wait()
+			<-quit
+			fmt.Println("End phase...")
+		},
 	}
 )
 
@@ -67,98 +142,21 @@ func init() {
 	rootCmd.Flags().StringVarP(&a, "aliens", "a", "aliens.txt", "File with alien names")
 }
 
-func RunRoot(cmd *cobra.Command, args []string) {
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	fmt.Println(`
-	Welcome to the inspiring web3 universe, where aliens are not the biggest topic anymore...
-	Here is the world and invaders configuration, upon which you would act on:
-	`)
-
-	fmt.Println("Invaders swarm flying to the planet (swarm consists of)", s, "creatures")
-	fmt.Println("You have configured this word to be invaded (world config file)", w)
-	fmt.Println(`Aliens could be pretty charming creatures, depends on your preference, 
-	not this time, universe are doomed (creatures config file):`, a)
-
-	www, alienSwarm := initiateUniverse(w, a)
-
-	leftAlive := landing(www, alienSwarm, &liveAliens)
-
-	if len(leftAlive.m) == 0 {
-		fmt.Println("All aliens are dead, nice try")
-		return
-	}
-
-	leftVeterans, www := invade(leftAlive, www)
-
-	fmt.Println(len(leftVeterans.m), " live aliens after invasion, probably trapped")
-	fmt.Println(len(www.Cities), " cities left able to fight back the swarm")
-}
-
-func initiateUniverse(w, a string) (*world.World, []string) {
+//Read world file and aliens file
+//Receive user input to read files
+//Returns pointer to the world and swarm structs
+func initiateUniverse(w, a string) (*world.World, *alien.Swarm) {
 	www, err := fs.ReadWorldFile(w)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	fmt.Println("Inocent world consist of:", len(www.Cities), "cities")
 
 	//Get all available alien names
-	allAlienNames, err := fs.ReadAliensFile(a)
+	swarm, err := fs.ReadAliensFile(a)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	//Land only those that fits into our alien swarm
-	alienSwarm := allAlienNames[0:s]
-
-	return www, alienSwarm
-}
-
-func landing(www *world.World, alienSwarm []string, liveAliens *LiveAliens) *LiveAliens {
-	//Landing process
-	//Land preconfigured swarm
-	for i, alienName := range alienSwarm {
-		//Here we got landed invaders
-		la := alien.NewAlien(alienName)
-		//Aliens are mostly invading big cities, city where alien landed
-		cityName, _ := alien.ChooseLocation(www, la, int64(i))
-		city, _ := www.GetCityByName(cityName)
-		if address, ok := city.(*world.City); ok {
-			err := address.AddAlienOrFight(la.Name)
-			if err != nil {
-				www.RemoveCity(address)
-				for _, invader := range address.Aliens {
-					delete(liveAliens.m, invader)
-				}
-			}
-			liveAliens.m[la.Name] = la
-			la.Location = address.Name
-		}
-	}
-
-	return liveAliens
-}
-
-func invade(liveAliens *LiveAliens, www *world.World) (*LiveAliens, *world.World) {
-	for k, ali := range liveAliens.m {
-		for j := 0; j < 10000; j++ {
-			if inv, ok := liveAliens.m[k]; ok {
-				//Returns name of the next move if available
-				nextMove, _ := inv.Move(www, int64(j))
-				//Take battle in case of another alien in place
-				city, _ := www.GetCityByName(nextMove)
-
-				if address, ok := city.(*world.City); ok {
-					err := address.AddAlienOrFight(ali.Name)
-					if err != nil {
-						www.RemoveCity(address)
-						for _, invader := range address.Aliens {
-							delete(liveAliens.m, invader)
-						}
-					}
-					ali.Location = address.Name
-				}
-			}
-		}
-	}
-	return liveAliens, www
+	fmt.Println("Here are some aliens left alive:")
+	fmt.Println(swarm.Aliens)
+	return www, swarm
 }

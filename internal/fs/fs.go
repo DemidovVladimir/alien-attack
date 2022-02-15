@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/VladimirDemidov/alien-attack/entity/alien"
 	"github.com/VladimirDemidov/alien-attack/entity/world"
 )
 
@@ -34,7 +35,8 @@ func ReadWorldFile(l string) (*world.World, error) {
 }
 
 //Read aliens file and generate world, not perfect, some side effects are happening
-func ReadAliensFile(l string) (aliens []string, err error) {
+func ReadAliensFile(l string) (swarm *alien.Swarm, err error) {
+	swarm = alien.NewSwarm()
 	f, err := os.Open(l)
 	if err != nil {
 		return
@@ -43,8 +45,11 @@ func ReadAliensFile(l string) (aliens []string, err error) {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		alien := scanner.Text()
-		aliens = append(aliens, alien)
+		al := scanner.Text()
+		swarm.LandedAliens = append(swarm.LandedAliens, al)
+		swarm.Aliens.Store(al, &alien.Alien{
+			Name: al,
+		})
 	}
 	return
 }

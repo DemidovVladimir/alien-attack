@@ -1,8 +1,16 @@
 package alien
 
+import "sync"
+
 type Alien struct {
 	Name     string
 	Location string
+}
+
+type Swarm struct {
+	Aliens sync.Map
+	//World before invasion
+	LandedAliens []string
 }
 
 //Code duplication for low coupling
@@ -16,12 +24,17 @@ func NewAlien(n string) *Alien {
 	}
 }
 
+//Create a new swarm
+func NewSwarm() *Swarm {
+	return &Swarm{}
+}
+
 //Choose next random location for an alien
-func ChooseLocation(w WorldUseCase, a *Alien, s int64) (string, error) {
-	return w.ProvideRandomCity(s)
+func ChooseLocation(w WorldUseCase, a *Alien, s int) (string, error) {
+	return w.ProvideRandomCity(int64(s))
 }
 
 //Move alien with the random direction
-func (a *Alien) Move(w WorldUseCase, s int64) (string, error) {
-	return w.GetRandomNeighbor(a.Location, s)
+func (a *Alien) Move(w WorldUseCase, s int) (string, error) {
+	return w.GetRandomNeighbor(a.Location, int64(s))
 }

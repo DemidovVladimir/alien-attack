@@ -1,26 +1,43 @@
 package alien
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/VladimirDemidov/alien-attack/internal/fs"
+	"github.com/VladimirDemidov/alien-attack/usecase/mock"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChooseLocation(t *testing.T) {
-	var i int64
-	w, _ := fs.ReadWorldFile("../../static/world.txt")
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mock.NewMockWorldUseCase(ctrl)
+
+	m.
+		EXPECT().
+		ProvideRandomCity(gomock.Eq(int64(0))).
+		Return("test", nil)
+
+	var i int
 	a := NewAlien("Bryval")
-	ChooseLocation(w, a, i)
+	ChooseLocation(m, a, i)
 	assert.NotNil(t, a.Location)
 }
 
 func TestChooseLocationWithoutCity(t *testing.T) {
-	var i int64
-	w, _ := fs.ReadWorldFile("../../static/onecityworld.txt")
-	w.Cities = nil
+	var i int
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mock.NewMockWorldUseCase(ctrl)
+
+	m.
+		EXPECT().
+		ProvideRandomCity(gomock.Eq(int64(0))).
+		Return("", errors.New("Error"))
+
 	a := NewAlien("Bryval")
-	_, err := ChooseLocation(w, a, i)
+	_, err := ChooseLocation(m, a, i)
 	assert.Error(t, err)
 }
 
@@ -29,12 +46,30 @@ func TestNewAlien(t *testing.T) {
 	assert.Equal(t, "Iroverk", a.Name)
 }
 
+func TestNewSwarm(t *testing.T) {
+	a := NewSwarm()
+	assert.NotNil(t, a)
+}
+
 func TestMove(t *testing.T) {
-	var i int64
-	w, _ := fs.ReadWorldFile("../../static/world.txt")
+	var i int
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	m := mock.NewMockWorldUseCase(ctrl)
+
+	m.
+		EXPECT().
+		GetRandomNeighbor(gomock.Eq("test"), gomock.Eq(int64(0))).
+		Return("test", nil)
+
+	m.
+		EXPECT().
+		ProvideRandomCity(gomock.Eq(int64(0))).
+		Return("test", nil)
+
 	a := NewAlien("Bryval")
-	al, _ := ChooseLocation(w, a, i)
+	al, _ := ChooseLocation(m, a, i)
 	a.Location = al
-	newLocation, _ := a.Move(w, i)
+	newLocation, _ := a.Move(m, i)
 	assert.NotNil(t, newLocation)
 }

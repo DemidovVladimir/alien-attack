@@ -1,6 +1,10 @@
 package alien
 
-import "sync"
+import (
+	"sync"
+
+	face "github.com/VladimirDemidov/alien-attack/usecase"
+)
 
 type Alien struct {
 	Name     string
@@ -30,11 +34,11 @@ func NewSwarm() *Swarm {
 }
 
 //Choose next random location for an alien
-func ChooseLocation(w WorldUseCase, a *Alien, s int) (string, error) {
+func ChooseLocation(w face.WorldUseCase, a *Alien, s int) (string, error) {
 	return w.ProvideRandomCity(int64(s))
 }
 
 //Move alien with the random direction
-func (a *Alien) Move(w WorldUseCase, s int) (string, error) {
+func (a *Alien) Move(w face.WorldUseCase, s int) (string, error) {
 	return w.GetRandomNeighbor(a.Location, int64(s))
 }

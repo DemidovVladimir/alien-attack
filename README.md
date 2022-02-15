@@ -40,3 +40,8 @@ perhaps using sync.pool would bring some performance boost
 -  Using sequential login as a first itteration
 -  Fixed coupling problem that was happening in the first version
 -  Increased packages testing
+
+## Refactored cuncurrent code PR: https://github.com/DemidovVladimir/alien-attack/pull/2
+-  Uses gracefull shutdown with quit channel
+-  Uses channels select to kill aliens and delete cities
+-  Uses sync.Map, perhaps sync.pool would be something that would fit, but first of all needs to be validated if it will fit GC processes 

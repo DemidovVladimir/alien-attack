@@ -1,4 +1,4 @@
-# Alien attack
+# Alien attack (this is the outdated version, please look through this PR: https://github.com/DemidovVladimir/alien-attack/pull/2 or use that branch)
 
 ## Please look through the Makefile if you'd like to start quick
 

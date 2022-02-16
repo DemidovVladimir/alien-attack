@@ -10,13 +10,13 @@ build-mocks:
 	@~/go/bin/mockgen -source=entity/alien/interface.go -destination=entity/alien/mock/alien.go -package=mock
 
 test:
-	go test -v ./... -coverprofile=coverage.out
+	go test -tags starcraft -v ./... -coverprofile=coverage.out
 
 run-dev: 
-	go run main.go -s=25 -w=static/world.txt -a=static/aliens.txt
+	go run -tags starcraft main.go -s=25 -w=static/world.txt -a=static/aliens.txt
 
 build:
-	go install github.com/VladimirDemidov/alien-attack  
+	go install -tags starcraft github.com/VladimirDemidov/alien-attack  
 
 run-prod:
 	alien-attack -s=5 -w=static/world.txt -a=static/aliens.txt 

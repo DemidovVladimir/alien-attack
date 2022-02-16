@@ -12,6 +12,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/VladimirDemidov/alien-attack/config"
 	"github.com/VladimirDemidov/alien-attack/entity/alien"
 	"github.com/VladimirDemidov/alien-attack/entity/world"
 	"github.com/VladimirDemidov/alien-attack/internal/fs"
@@ -87,7 +88,7 @@ var (
 					wg *sync.WaitGroup,
 				) {
 					defer wg.Done()
-					for i := 0; i < 10000; i++ {
+					for i := 0; i < config.STEPS; i++ {
 						if selectedAlien, k := swarm.Aliens.Load(a); k {
 							sa := selectedAlien.(*alien.Alien)
 							cn, _ := sa.Move(www, i)
@@ -120,8 +121,23 @@ var (
 			}(rac, rcc, swarm, www, &wg)
 
 			wg.Wait()
-			<-quit
-			fmt.Println("End phase...")
+			quit <- syscall.SIGQUIT
+			fmt.Println(`
+			End phase...
+			World map after the alien attack:
+			`)
+			www.Cities.Range(func(key, value interface{}) bool {
+				fmt.Println("City:", key)
+				return true
+			})
+			fmt.Println(`
+			End phase...
+			Ready to be evacurated:
+			`)
+			swarm.Aliens.Range(func(key, value interface{}) bool {
+				fmt.Println("Alien:", key)
+				return true
+			})
 		},
 	}
 )
@@ -151,12 +167,27 @@ func initiateUniverse(w, a string) (*world.World, *alien.Swarm) {
 		log.Fatal(err.Error())
 	}
 
+	fmt.Println(`
+			Starting phase...
+			Map of the inocent world:
+			`)
+	www.Cities.Range(func(key, value interface{}) bool {
+		fmt.Println("City able to fight back:", key)
+		return true
+	})
+
 	//Get all available alien names
 	swarm, err := fs.ReadAliensFile(a)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	fmt.Println("Here are some aliens left alive:")
-	fmt.Println(swarm.Aliens)
+	fmt.Println(`
+			Starting phase...
+			Wariors ready to begin:
+			`)
+	swarm.Aliens.Range(func(key, value interface{}) bool {
+		fmt.Println("Invader", key)
+		return true
+	})
 	return www, swarm
 }

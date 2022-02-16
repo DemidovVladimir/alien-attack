@@ -8,7 +8,8 @@ import (
 
 func TestReadWorldFile(t *testing.T) {
 	world, _ := ReadWorldFile("../../static/world.txt")
-	assert.Equal(t, 25, len(world.Cities))
+	_, ok := world.Cities.Load("Yokohama")
+	assert.True(t, ok)
 }
 
 func TestReadWorldFileReadFail(t *testing.T) {
@@ -18,7 +19,8 @@ func TestReadWorldFileReadFail(t *testing.T) {
 
 func TestReadAliensFile(t *testing.T) {
 	aliens, _ := ReadAliensFile("../../static/aliens.txt")
-	assert.Equal(t, 30, len(aliens))
+	_, ok := aliens.Aliens.Load("Kikk")
+	assert.True(t, ok)
 }
 
 func TestReadAliensFileFailure(t *testing.T) {

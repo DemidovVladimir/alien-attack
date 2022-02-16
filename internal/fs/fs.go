@@ -25,12 +25,12 @@ func ReadWorldFile(l string) (*world.World, error) {
 		directions := chunks[1:]
 		for j := 0; j < len(directions); j++ {
 			ds := strings.Split(directions[j], "=")
-			city.AddNeighbor(world.WorldDirections[ds[0]], world.NewCity(ds[1]))
+			city.AddNeighbor(ds[0], world.NewCity(ds[1]))
 		}
-		newWorld.AddCity(city)
+		newWorld.AddCity(&city)
 	}
 
-	return newWorld, nil
+	return &newWorld, nil
 }
 
 //Read aliens file and generate world, not perfect, some side effects are happening

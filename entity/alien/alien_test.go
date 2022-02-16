@@ -11,8 +11,7 @@ func TestChooseLocation(t *testing.T) {
 	var i int64
 	w, _ := fs.ReadWorldFile("../../static/world.txt")
 	a := NewAlien("Bryval")
-	l, _ := ChooseLocation(w, a, i)
-	assert.NotNil(t, l)
+	ChooseLocation(w, a, i)
 	assert.NotNil(t, a.Location)
 }
 
@@ -32,23 +31,10 @@ func TestNewAlien(t *testing.T) {
 
 func TestMove(t *testing.T) {
 	var i int64
-	c := make(chan string)
 	w, _ := fs.ReadWorldFile("../../static/world.txt")
 	a := NewAlien("Bryval")
-
-	ChooseLocation(w, a, i)
-	a.Move(w, i, c)
-	assert.NotNil(t, a.Location)
-}
-
-func TestMoveFail(t *testing.T) {
-	var i int64
-	c := make(chan string)
-	w, _ := fs.ReadWorldFile("../../static/world.txt")
-	a := NewAlien("Bryval")
-
-	ChooseLocation(w, a, i)
-	a.Location.Directions = nil
-	err := a.Move(w, i, c)
-	assert.Error(t, err)
+	al, _ := ChooseLocation(w, a, i)
+	a.Location = al
+	newLocation, _ := a.Move(w, i)
+	assert.NotNil(t, newLocation)
 }

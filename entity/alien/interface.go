@@ -1,7 +1,15 @@
 package alien
 
-import "github.com/VladimirDemidov/alien-attack/entity/world"
+type WorldUseCase interface {
+	ProvideRandomCity(int64) (string, error)
+	GetCityByName(string) (interface{}, error)
+	GetRandomNeighbor(string, int64) (string, error)
+}
 
-type UseCase interface {
-	Move(*world.World, int64)
+type CityUseCase interface {
+	AddAlienOrFight(name string) error
+}
+
+type AlienUseCase interface {
+	Move(WorldUseCase, int64) (string, error)
 }

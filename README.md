@@ -15,7 +15,7 @@ make run-dev
 
 ## You can run this project in dev mode with flexibility:
 ```
-go run main.go -s=<number> -w=<file> -a=<file>
+go run -tags=starcraft main.go -w=<file> -a=<file>
 ``` 
 
 ## You can run this project in prod mode by building it first:

@@ -50,7 +50,6 @@ var (
 	Here is the world and invaders configuration, upon which you would act on:
 	`)
 
-			fmt.Println("Invaders swarm flying to the planet (swarm consists of)", s, "creatures")
 			fmt.Println("You have configured this word to be invaded (world config file)", w)
 			fmt.Println(`Aliens could be pretty charming creatures, depends on your preference,
 	not this time, universe are doomed (creatures config file):`, a)

@@ -13,7 +13,7 @@ test:
 	go test -tags starcraft -v ./... -coverprofile=coverage.out
 
 run-dev: 
-	go run -tags starcraft main.go -s=25 -w=static/world.txt -a=static/aliens.txt
+	go run -tags starcraft main.go -w=static/world.txt -a=static/aliens.txt
 
 build:
 	go install -tags starcraft github.com/VladimirDemidov/alien-attack  
